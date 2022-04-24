@@ -29,6 +29,10 @@ class EnvironmentLoader {
             acc[k] = environmentValues[k] || loadedValues[k];
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
+        const exists = values.map(k => [k, finalValues[k]]).filter(k => k[1] === undefined);
+        for (const [key] of exists) {
+            throw new Error(`Environment variable ${key} is not defined.`);
+        }
         return finalValues;
     }
 }
