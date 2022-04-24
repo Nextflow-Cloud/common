@@ -9,7 +9,7 @@ import bcrypt from "bcrypt";
 import { encode, decode } from "@msgpack/msgpack";
 
 class EncryptionManager {
-    constructor(private KEY: Buffer, private PUBLIC_KEY: Buffer, private PRIVATE_KEY: Buffer) {}
+    constructor(private KEY: Buffer, private PUBLIC_KEY: string, private PRIVATE_KEY: string) {}
 
     static generateKeySet() {
         const key = this.generateAESKey();
@@ -43,25 +43,25 @@ class EncryptionManager {
             }
         });
         return {
-            publicKey: Buffer.from(keys.publicKey),
-            privateKey: Buffer.from(keys.privateKey)
+            publicKey: keys.publicKey,
+            privateKey: keys.privateKey
         };
     }
 
-    encryptRSA(input: string, padding: number = 4, publicKey: Buffer = this.PUBLIC_KEY) { // 11
+    encryptRSA(input: string, padding: number = 4, publicKey: string = this.PUBLIC_KEY) { // 11
         const text = Buffer.from(input);
         const cipherText = crypto.publicEncrypt({ key: publicKey, padding }, text);
         return cipherText.toString("base64");
     }
-    decryptRSA(input: string, padding: number = 4, privateKey: Buffer = this.PRIVATE_KEY) { // 11
+    decryptRSA(input: string, padding: number = 4, privateKey: string = this.PRIVATE_KEY) { // 11
         const text = Buffer.from(input, "base64");
         const decrypted = crypto.privateDecrypt({ key: privateKey, padding }, text);
         return decrypted.toString("utf8");
     }
-    sign(data: Buffer, privateKey: Buffer = this.PRIVATE_KEY) {
+    sign(data: Buffer, privateKey: string = this.PRIVATE_KEY) {
         return crypto.sign("RSA-SHA256", data, privateKey);
     }
-    verify(data: Buffer, signature: Buffer, publicKey: Buffer = this.PUBLIC_KEY) {
+    verify(data: Buffer, signature: Buffer, publicKey: string = this.PUBLIC_KEY) {
         return crypto.verify("RSA-SHA256", data, publicKey, signature);
     }
     

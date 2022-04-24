@@ -15,7 +15,7 @@ const loadEnvironment = (file: string) => {
 };
 
 class EnvironmentLoader {
-    static load(file: string, values: string[]) {
+    static load(values: string[], file: string = "./.env") {
         const load = loadEnvironment(file);
         const environmentValues = Object.entries(process.env).filter(([key]) => values.includes(key)).reduce((acc, [key, value]) => {
             if (value) acc[key] = value;
