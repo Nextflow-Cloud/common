@@ -1,2 +1,3 @@
 import EncryptionManager from "./EncryptionManager";
-export { EncryptionManager };
+import EnvironmentLoader from "./EnvironmentLoader";
+export { EncryptionManager, EnvironmentLoader };
