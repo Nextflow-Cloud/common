@@ -1,6 +1,6 @@
 {
   "name": "@nextium/common",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "GPL-3.0",
@@ -15,5 +15,8 @@
   "dependencies": {
     "@msgpack/msgpack": "^2.7.2",
     "bcrypt": "^5.0.1"
-  }
+  },
+  "files": [
+    "dist/**/*.*"
+  ]
 }
