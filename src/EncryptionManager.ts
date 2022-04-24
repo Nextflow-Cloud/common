@@ -48,14 +48,14 @@ class EncryptionManager {
         };
     }
 
-    encryptRSA(input: string, publicKey: Buffer = this.PUBLIC_KEY) {
+    encryptRSA(input: string, padding: number = 4, publicKey: Buffer = this.PUBLIC_KEY) { // 11
         const text = Buffer.from(input);
-        const cipherText = crypto.publicEncrypt(publicKey, text);
+        const cipherText = crypto.publicEncrypt({ key: publicKey, padding }, text);
         return cipherText.toString("base64");
     }
-    decryptRSA(input: string, privateKey: Buffer = this.PRIVATE_KEY) {
+    decryptRSA(input: string, padding: number = 4, privateKey: Buffer = this.PRIVATE_KEY) { // 11
         const text = Buffer.from(input, "base64");
-        const decrypted = crypto.privateDecrypt(privateKey, text);
+        const decrypted = crypto.privateDecrypt({ key: privateKey, padding }, text);
         return decrypted.toString("utf8");
     }
     sign(data: Buffer, privateKey: Buffer = this.PRIVATE_KEY) {
