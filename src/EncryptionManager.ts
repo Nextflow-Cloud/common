@@ -25,8 +25,8 @@ class EncryptionManager {
     async verifyPassword(password: string, passwordHash: string) {
         return await bcrypt.compare(password, passwordHash);
     }
-    async hashPassword(password: string) {
-        return await bcrypt.hash(password, await bcrypt.genSalt(10));
+    async hashPassword(password: string, salt?: string) {
+        return await bcrypt.hash(password, salt || await bcrypt.genSalt(10));
     }
 
     // RSA functions
