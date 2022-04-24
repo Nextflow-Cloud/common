@@ -14,7 +14,8 @@
   },
   "dependencies": {
     "@msgpack/msgpack": "^2.7.2",
-    "bcrypt": "^5.0.1"
+    "bcrypt": "^5.0.1",
+    "mongodb": "^4.5.0"
   },
   "files": [
     "dist/**/*.*"

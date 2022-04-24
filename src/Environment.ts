@@ -14,7 +14,7 @@ const loadEnvironment = (file: string) => {
     return result;
 };
 
-class EnvironmentLoader {
+class Environment {
     static load(values: string[], file: string = "./.env") {
         const load = loadEnvironment(file);
         const environmentValues = Object.entries(process.env).filter(([key]) => values.includes(key)).reduce((acc, [key, value]) => {
@@ -37,4 +37,4 @@ class EnvironmentLoader {
     }
 }
 
-export default EnvironmentLoader;
+export default Environment;

@@ -1,3 +1,5 @@
+import Database from "./Database";
+import DatabaseSchema from "./DatabaseSchema";
 import EncryptionManager from "./EncryptionManager";
-import EnvironmentLoader from "./EnvironmentLoader";
-export { EncryptionManager, EnvironmentLoader };
+import Environment from "./Environment";
+export { Database, DatabaseSchema, EncryptionManager, Environment };
