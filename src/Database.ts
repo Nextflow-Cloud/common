@@ -15,6 +15,8 @@ class Database extends EventEmitter {
     }
 
     async connect() {
+        this.client.on("error", e => this.emit("error", e));
+        this.client.on("close", () => this.emit("disconnected"));
         await this.client.connect().catch(e => {
             throw new DatabaseError("Failed to connect to the database - server timed out or invalid URI. " + e);
         });
