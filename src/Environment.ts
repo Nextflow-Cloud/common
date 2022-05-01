@@ -15,7 +15,7 @@ const loadEnvironment = (file: string) => {
 };
 
 class Environment {
-    static load(values: string[], file: string = "./.env") {
+    static load(values: string[], setProcessEnv = false, file: string = "./.env") {
         const load = loadEnvironment(file);
         const environmentValues = Object.entries(process.env).filter(([key]) => values.includes(key)).reduce((acc, [key, value]) => {
             if (value) acc[key] = value;
@@ -26,12 +26,17 @@ class Environment {
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
         const finalValues = values.reduce((acc, k) => {
-            acc[k] = environmentValues[k] || loadedValues[k];
+            acc[k] = (environmentValues[k] || loadedValues[k]).toString();
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
         const exists = values.map(k => [k, finalValues[k]]).filter(k => k[1] === undefined);
         for (const [key] of exists) {
             throw new Error(`Environment variable ${key} is not defined.`);
+        }
+        if (setProcessEnv) {
+            for (const [key, value] of Object.entries(finalValues)) {
+                process.env[key] = value;
+            }
         }
         return finalValues;
     }
