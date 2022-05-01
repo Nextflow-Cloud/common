@@ -26,7 +26,7 @@ class Environment {
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
         const finalValues = values.reduce((acc, k) => {
-            acc[k] = (environmentValues[k] || loadedValues[k]).toString();
+            acc[k] = (environmentValues[k] || loadedValues[k]).trim();
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
         const exists = values.map(k => [k, finalValues[k]]).filter(k => k[1] === undefined);
