@@ -71,26 +71,44 @@ class DatabaseSchema {
     }
     // findAndModify ? 
     // https://docs.mongodb.com/manual/reference/method/js-collection/
-    parse(obj: OptionalId<Document>) {
+    parse(obj: Document) {
         return new Promise<boolean>((resolve, reject) => {
-            Object.keys(obj).forEach(key => {
+            Object.keys(obj).map(key => {
                 if (!this.schema[key]) {
                     reject(new DatabaseError('Invalid property: ' + key));
                 }
-                if (this.schema[key].name !== obj[key].constructor.name) {
-                    reject(new DatabaseError('Invalid type for property: ' + key));
-                }
-                if (this.schema[key].name === "String" && obj[key].length > this.schema[key].maxLength) {
-                    reject(new DatabaseError('Invalid length for property: ' + key));
-                }
-                if (this.schema[key].name === "Number" && obj[key] > this.schema[key].max) {
-                    reject(new DatabaseError('Invalid value for property: ' + key));
-                } 
-                if (this.schema[key].name === "Number" && obj[key] < this.schema[key].min) {
-                    reject(new DatabaseError('Invalid value for property: ' + key));
+                if (typeof this.schema[key] === "object") {
+                    if (!this.schema[key].type) {
+                        reject(new DatabaseError('Invalid property: ' + key));
+                    }
+                    if (this.schema[key].type.name !== obj[key].constructor.name) {
+                        reject(new DatabaseError('Invalid type for property: ' + key));
+                    }
+                    if (this.schema[key].type.name === "String" && this.schema[key].regex && !obj[key].match(this.schema[key].regex)) {
+                        reject(new DatabaseError('Invalid value for property: ' + key));
+                    }
+                    if (this.schema[key].type.name === "String" && obj[key].length > this.schema[key].maxLength) {
+                        reject(new DatabaseError('Invalid length for property: ' + key));
+                    }
+                    if (this.schema[key].type.name === "Number" && obj[key] > this.schema[key].max) {
+                        reject(new DatabaseError('Invalid value for property: ' + key));
+                    } 
+                    if (this.schema[key].type.name === "Number" && obj[key] < this.schema[key].min) {
+                        reject(new DatabaseError('Invalid value for property: ' + key));
+                    }
+                    if (this.schema[key].required && !obj[key]) {
+                        reject(new DatabaseError('Required property: ' + key));
+                    }
+                    if (this.schema[key].default instanceof this.schema[key].type && !obj[key]) {
+                        obj[key] = this.schema[key].default;
+                    }
+                } else {
+                    if (this.schema[key].name !== obj[key].constructor.name) {
+                        reject(new DatabaseError('Invalid type for property: ' + key));
+                    }
                 }
                 resolve(true);
-            }); 
+            });
         });
     }
 }
