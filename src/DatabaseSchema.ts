@@ -1,4 +1,4 @@
-import { Document, Filter, MatchKeysAndValues, OptionalId } from "mongodb";
+import { Document, Filter, OptionalId, UpdateFilter, WithoutId } from "mongodb";
 import Database from "./Database";
 import DatabaseError from "./DatabaseError";
 
@@ -12,103 +12,129 @@ class DatabaseSchema {
         this.schema = objTypes;
     }
 
+    /**
+     * Alias for insertOne().
+     */
     async create(object: OptionalId<Document>) {
-        if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new DatabaseError('No database connection');
-        return await this.parse(object).then(() => {
-            return this.insertOne(object);
-        }).catch(e => {
-            throw e;
-        });
+        return await this.insertOne(object);
     }
+    /**
+     * Alias for updateOne().
+     */
+    async update(query: Filter<Document>, update: UpdateFilter<Document>) {
+        return await this.updateOne(query, update);
+    }
+    /**
+     * Alias for deleteOne().
+     */
+    async delete(query: Filter<Document>) {
+        return await this.deleteOne(query);
+    }
+    
     async findOne(query: Filter<Document>) { 
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client) throw new Error('No database connection');
+        if (!this.client) throw new Error("No database connection");
         return await this.client.database?.collection(this.collection).findOne(query);
     }
-    async findOneAndUpdate(query: Filter<Document>, update: MatchKeysAndValues<Document>) {
+    async findOneAndReplace(query: Filter<Document>, update: WithoutId<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
-        await this.parse(update);
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(update);
+        return await this.client.database?.collection(this.collection).findOneAndReplace(query, { $set: update });
+    }
+    async findOneAndUpdate(query: Filter<Document>, update: UpdateFilter<Document>) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(update);
         return await this.client.database?.collection(this.collection).findOneAndUpdate(query, { $set: update });
     }
     async findOneAndDelete(query: Filter<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
-        this.client.database?.collection(this.collection).findOneAndDelete(query);
+        if (!this.client?.connected) throw new Error("No database connection");
+        return await this.client.database?.collection(this.collection).findOneAndDelete(query);
     }
     async find(query: Filter<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
+        if (!this.client?.connected) throw new Error("No database connection");
         const arr = await this.client.database?.collection(this.collection).find(query).toArray();
         return arr;
     }
-    async insertOne(obj: OptionalId<Document>) {
+    async insertOne(object: OptionalId<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
-        await this.parse(obj);
-        return await this.client.database?.collection(this.collection).insertOne(obj);
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(object);
+        return await this.client.database?.collection(this.collection).insertOne(object);
     }
     async insertMany(obj: OptionalId<Document>[]) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
+        if (!this.client?.connected) throw new Error("No database connection");
         await Promise.all(obj.map(i => this.parse(i)));
         return await this.client.database?.collection(this.collection).insertMany(obj);
     }
-    // async updateOne(query, update) {
-    // }
-    // async updateMany(query, update) {
-    // }
+    async replaceOne(query: Filter<Document>, update: WithoutId<Document>) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(update);
+        return await this.client.database?.collection(this.collection).replaceOne(query, { $set: update });
+    }
+    async updateOne(query: Filter<Document>, update: UpdateFilter<Document>) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(update);
+        return await this.client.database?.collection(this.collection).updateOne(query, { $set: update });
+    }
+    async updateMany(query: Filter<Document>, update: UpdateFilter<Document>) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        this.parse(update);
+        return await this.client.database?.collection(this.collection).updateMany(query, { $set: update });
+    }
     async deleteOne(query: Filter<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
+        if (!this.client?.connected) throw new Error("No database connection");
         return await this.client.database?.collection(this.collection).deleteOne(query);
     }
     async deleteMany(query: Filter<Document>) {
         if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error('No database connection');
+        if (!this.client?.connected) throw new Error("No database connection");
         return await this.client.database?.collection(this.collection).deleteMany(query);
     }
-    // findAndModify ? 
-    // https://docs.mongodb.com/manual/reference/method/js-collection/
+    
     parse(obj: Document) {
-        return new Promise<boolean>((resolve, reject) => {
-            Object.keys(obj).map(key => {
-                if (!this.schema[key]) {
-                    reject(new DatabaseError('Invalid property: ' + key));
+        Object.keys(obj).map(key => {
+            if (!this.schema[key]) {
+                throw new DatabaseError("Invalid property: " + key);
+            }
+            if (typeof this.schema[key] === "object") {
+                if (!this.schema[key].type) {
+                    throw new DatabaseError("Invalid property: " + key);
                 }
-                if (typeof this.schema[key] === "object") {
-                    if (!this.schema[key].type) {
-                        reject(new DatabaseError('Invalid property: ' + key));
-                    }
-                    if (this.schema[key].type.name !== obj[key].constructor.name) {
-                        reject(new DatabaseError('Invalid type for property: ' + key));
-                    }
-                    if (this.schema[key].type.name === "String" && this.schema[key].regex && !obj[key].match(this.schema[key].regex)) {
-                        reject(new DatabaseError('Invalid value for property: ' + key));
-                    }
-                    if (this.schema[key].type.name === "String" && obj[key].length > this.schema[key].maxLength) {
-                        reject(new DatabaseError('Invalid length for property: ' + key));
-                    }
-                    if (this.schema[key].type.name === "Number" && obj[key] > this.schema[key].max) {
-                        reject(new DatabaseError('Invalid value for property: ' + key));
-                    } 
-                    if (this.schema[key].type.name === "Number" && obj[key] < this.schema[key].min) {
-                        reject(new DatabaseError('Invalid value for property: ' + key));
-                    }
-                    if (this.schema[key].required && !obj[key]) {
-                        reject(new DatabaseError('Required property: ' + key));
-                    }
-                    if (this.schema[key].default instanceof this.schema[key].type && !obj[key]) {
-                        obj[key] = this.schema[key].default;
-                    }
-                } else {
-                    if (this.schema[key].name !== obj[key].constructor.name) {
-                        reject(new DatabaseError('Invalid type for property: ' + key));
-                    }
+                if (this.schema[key].type.name !== obj[key].constructor.name) {
+                    throw new DatabaseError("Invalid type for property: " + key);
                 }
-                resolve(true);
-            });
+                if (this.schema[key].type.name === "String" && this.schema[key].regex && !obj[key].match(this.schema[key].regex)) {
+                    throw new DatabaseError("Invalid value for property: " + key);
+                }
+                if (this.schema[key].type.name === "String" && obj[key].length > this.schema[key].maxLength) {
+                    throw new DatabaseError("Invalid length for property: " + key);
+                }
+                if (this.schema[key].type.name === "Number" && obj[key] > this.schema[key].max) {
+                    throw new DatabaseError("Invalid value for property: " + key);
+                } 
+                if (this.schema[key].type.name === "Number" && obj[key] < this.schema[key].min) {
+                    throw new DatabaseError("Invalid value for property: " + key);
+                }
+                if (this.schema[key].required && !obj[key]) {
+                    throw new DatabaseError("Required property: " + key);
+                }
+                if (this.schema[key].default instanceof this.schema[key].type && !obj[key]) {
+                    obj[key] = this.schema[key].default;
+                }
+            } else {
+                if (this.schema[key].name !== obj[key].constructor.name) {
+                    throw new DatabaseError("Invalid type for property: " + key);
+                }
+            }
         });
     }
 }
