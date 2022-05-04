@@ -30,6 +30,20 @@ class DatabaseSchema {
     async delete(query: Filter<Document>) {
         return await this.deleteOne(query);
     }
+
+    async updateBase(query: Document) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client) throw new Error("No database connection");
+        const filter: Filter<Document> = {};
+        for (const key of Object.keys(query).filter(i => !i.startsWith("$"))) {
+            filter[key] = query[key];
+        }
+        const update: UpdateFilter<Document> = {};
+        for (const key of Object.keys(query).filter(i => i.startsWith("$"))) {
+            update[key] = query[key];
+        }
+        return await this.client.database?.collection(this.collection).findOneAndUpdate(filter, update);
+    }
     
     async findOne(query: Filter<Document>) { 
         if (!this.client) this.client = Database.globalClient;
