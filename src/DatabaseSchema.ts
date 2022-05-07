@@ -44,6 +44,12 @@ class DatabaseSchema {
         }
         return await this.client.database?.collection(this.collection).findOneAndUpdate(filter, update);
     }
+
+    async findLimit(limit: number) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        return await this.client.database?.collection(this.collection).find().limit(limit).toArray();
+    }
     
     async findOne(query: Filter<Document>) { 
         if (!this.client) this.client = Database.globalClient;
