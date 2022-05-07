@@ -45,16 +45,26 @@ class DatabaseSchema {
         return await this.client.database?.collection(this.collection).findOneAndUpdate(filter, update);
     }
 
-    async findLimit(limit: number) {
+    async find(query: Filter<Document>) {
         if (!this.client) this.client = Database.globalClient;
         if (!this.client?.connected) throw new Error("No database connection");
-        return await this.client.database?.collection(this.collection).find().limit(limit).toArray();
+        const arr = await this.client.database?.collection(this.collection).find(query).toArray();
+        return arr;
     }
-    
+    async findLimit(query: Filter<Document>, limit: number) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        return await this.client.database?.collection(this.collection).find(query).limit(limit).toArray();
+    }
     async findOne(query: Filter<Document>) { 
         if (!this.client) this.client = Database.globalClient;
         if (!this.client) throw new Error("No database connection");
         return await this.client.database?.collection(this.collection).findOne(query);
+    }
+    async findOneAndDelete(query: Filter<Document>) {
+        if (!this.client) this.client = Database.globalClient;
+        if (!this.client?.connected) throw new Error("No database connection");
+        return await this.client.database?.collection(this.collection).findOneAndDelete(query);
     }
     async findOneAndReplace(query: Filter<Document>, update: WithoutId<Document>) {
         if (!this.client) this.client = Database.globalClient;
@@ -68,17 +78,7 @@ class DatabaseSchema {
         this.parse(update);
         return await this.client.database?.collection(this.collection).findOneAndUpdate(query, { $set: update });
     }
-    async findOneAndDelete(query: Filter<Document>) {
-        if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error("No database connection");
-        return await this.client.database?.collection(this.collection).findOneAndDelete(query);
-    }
-    async find(query: Filter<Document>) {
-        if (!this.client) this.client = Database.globalClient;
-        if (!this.client?.connected) throw new Error("No database connection");
-        const arr = await this.client.database?.collection(this.collection).find(query).toArray();
-        return arr;
-    }
+    
     async insertOne(object: OptionalId<Document>) {
         if (!this.client) this.client = Database.globalClient;
         if (!this.client?.connected) throw new Error("No database connection");
