@@ -26,13 +26,10 @@ class Environment {
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
         const finalValues = values.reduce((acc, k) => {
+            if (!(environmentValues[k] || loadedValues[k])) throw new Error(`Environment variable ${k} is not defined.`);
             acc[k] = (environmentValues[k] || loadedValues[k]).trim();
             return acc;
         }, {} as Record<string, string>) as { [key: string]: string };
-        const exists = values.map(k => [k, finalValues[k]]).filter(k => k[1] === undefined);
-        for (const [key] of exists) {
-            throw new Error(`Environment variable ${key} is not defined.`);
-        }
         if (setProcessEnv) {
             for (const [key, value] of Object.entries(finalValues)) {
                 process.env[key] = value;
