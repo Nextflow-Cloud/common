@@ -144,7 +144,7 @@ class DatabaseSchema {
                 if (this.schema[key].type.name === "Number" && obj[key] < this.schema[key].min) {
                     throw new DatabaseError("Invalid value for property: " + key);
                 }
-                if (this.schema[key].required && !obj[key]) {
+                if (this.schema[key].required && (obj[key] === undefined || obj[key] === null)) {
                     throw new DatabaseError("Required property: " + key);
                 }
                 if (this.schema[key].default instanceof this.schema[key].type && !obj[key]) {
