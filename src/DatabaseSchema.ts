@@ -129,7 +129,7 @@ class DatabaseSchema {
                 if (!this.schema[key].type) {
                     throw new DatabaseError("Invalid property: " + key);
                 }
-                if (this.schema[key].type.name !== obj[key].constructor.name) {
+                if (this.schema[key].type.name !== obj[key]?.constructor?.name) {
                     throw new DatabaseError("Invalid type for property: " + key);
                 }
                 if (this.schema[key].type.name === "String" && this.schema[key].regex && !obj[key].match(this.schema[key].regex)) {
@@ -151,7 +151,7 @@ class DatabaseSchema {
                     obj[key] = this.schema[key].default;
                 }
             } else {
-                if (this.schema[key].name !== obj[key].constructor.name) {
+                if (this.schema[key].name !== obj[key]?.constructor?.name) {
                     throw new DatabaseError("Invalid type for property: " + key);
                 }
             }
